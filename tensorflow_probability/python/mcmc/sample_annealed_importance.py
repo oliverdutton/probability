@@ -264,9 +264,7 @@ def sample_annealed_importance_chain(
       """Creates first version of `previous_kernel_results`."""
       kernel = make_kernel_fn(_make_convex_combined_log_prob_fn(iter_=0))
       inner_results = kernel.bootstrap_results(init_state)
-      mh_results = _find_inner_mh_results(inner_results)
-
-      convex_combined_log_prob = mh_results.accepted_results.target_log_prob
+      convex_combined_log_prob = _get_ais_weights_init(inner_results)
       dtype = dtype_util.as_numpy_dtype(convex_combined_log_prob.dtype)
       shape = tf.shape(convex_combined_log_prob)
       proposal_log_prob = tf.fill(shape, dtype(np.nan),
