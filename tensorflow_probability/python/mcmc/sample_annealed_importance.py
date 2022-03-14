@@ -42,12 +42,22 @@ class AISResults(
   __slots__ = ()
 
 
-def _find_inner_mh_results(results):
+def _get_ais_weights_init(results):
+  ''' Infers the shape ais_weights will be
+  by recursively looking through results dict'''
   if (hasattr(results, 'proposed_results')
       and hasattr(results, 'accepted_results')):
-    return results
+    # e.g. HMC
+    return tf.zeros(
+        shape=tf.broadcast_dynamic_shape(
+            tf.shape(mh_results.proposed_results.target_log_prob),
+            tf.shape(mh_results.accepted_results.target_log_prob)),
+        dtype=mh_results.proposed_results.target_log_prob.dtype)
+  if (hasattr(results, 'target_log_prob'):
+    # e.g. NUTS
+    return tf.zeros_like(results.target_log_prob)
   if hasattr(results, 'inner_results'):
-    return _find_inner_mh_results(results.inner_results)
+    return _get_ais_weights_init(results.inner_results)
   raise TypeError('Cannot find MH results.')
 
 
@@ -272,13 +282,7 @@ def sample_annealed_importance_chain(
 
     previous_kernel_results = _bootstrap_results(current_state)
     inner_results = previous_kernel_results.inner_results
-    mh_results = _find_inner_mh_results(inner_results)
-
-    ais_weights = tf.zeros(
-        shape=tf.broadcast_dynamic_shape(
-            tf.shape(mh_results.proposed_results.target_log_prob),
-            tf.shape(mh_results.accepted_results.target_log_prob)),
-        dtype=mh_results.proposed_results.target_log_prob.dtype)
+    ais_weights = _get_ais_weights_init(inner_results)
 
     [_, _, ais_weights, current_state, kernel_results] = tf.while_loop(
         cond=lambda iter_, *args: iter_ < num_steps,
