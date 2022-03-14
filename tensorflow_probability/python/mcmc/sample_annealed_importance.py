@@ -50,15 +50,15 @@ def _get_ais_weights_init(results):
     # e.g. HMC
     return tf.zeros(
         shape=tf.broadcast_dynamic_shape(
-            tf.shape(mh_results.proposed_results.target_log_prob),
-            tf.shape(mh_results.accepted_results.target_log_prob)),
-        dtype=mh_results.proposed_results.target_log_prob.dtype)
+            tf.shape(results.proposed_results.target_log_prob),
+            tf.shape(results.accepted_results.target_log_prob)),
+        dtype=results.proposed_results.target_log_prob.dtype)
   if hasattr(results, 'target_log_prob'):
     # e.g. NUTS
     return tf.zeros_like(results.target_log_prob)
   if hasattr(results, 'inner_results'):
     return _get_ais_weights_init(results.inner_results)
-  raise TypeError('Cannot find MH results.')
+  raise TypeError('Cannot find results.')
 
 
 def sample_annealed_importance_chain(
