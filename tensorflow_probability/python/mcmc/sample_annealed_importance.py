@@ -48,11 +48,7 @@ def _get_ais_weights_init(results):
   if (hasattr(results, 'proposed_results')
       and hasattr(results, 'accepted_results')):
     # e.g. HMC
-    return tf.zeros(
-        shape=tf.broadcast_dynamic_shape(
-            tf.shape(results.proposed_results.target_log_prob),
-            tf.shape(results.accepted_results.target_log_prob)),
-        dtype=results.proposed_results.target_log_prob.dtype)
+    return tf.zeros_like(results.accepted_results.target_log_prob)
   if hasattr(results, 'target_log_prob'):
     # e.g. NUTS
     return tf.zeros_like(results.target_log_prob)
@@ -266,11 +262,10 @@ def sample_annealed_importance_chain(
       inner_results = kernel.bootstrap_results(init_state)
       convex_combined_log_prob = _get_ais_weights_init(inner_results)
       dtype = dtype_util.as_numpy_dtype(convex_combined_log_prob.dtype)
-      shape = tf.shape(convex_combined_log_prob)
-      proposal_log_prob = tf.fill(shape, dtype(np.nan),
-                                  name='bootstrap_proposal_log_prob')
-      target_log_prob = tf.fill(shape, dtype(np.nan),
-                                name='target_target_log_prob')
+      proposal_log_prob = tf.zeros_like(convex_combined_log_prob,
+                                  name='bootstrap_proposal_log_prob')*dtype(np.nan)
+      target_log_prob = tf.zeros_like(convex_combined_log_prob,
+                                  name='target_target_log_prob')*dtype(np.nan)
 
       return AISResults(
           proposal_log_prob=proposal_log_prob,
